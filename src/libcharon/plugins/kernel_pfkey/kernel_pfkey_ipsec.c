@@ -513,6 +513,13 @@ struct policy_entry_t {
 		uint8_t mask;
 		/** Protocol */
 		uint8_t proto;
+#ifdef __QNX__
+		/* Port range, which may be used when the port of (host_t *net) is any(0) */
+		/* It is not for icmp and icmp6 */
+		/* We don't reuse (host_t *net) for compatibility */
+		uint16_t from_port;
+		uint16_t to_port;
+#endif
 	} src, dst;
 
 	/** Associated route installed for this policy */
@@ -538,6 +545,17 @@ static policy_entry_t *create_policy_entry(traffic_selector_t *src_ts,
 
 	src_ts->to_subnet(src_ts, &policy->src.net, &policy->src.mask);
 	dst_ts->to_subnet(dst_ts, &policy->dst.net, &policy->dst.mask);
+
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+	policy->src.from_port = src_ts->get_from_port(src_ts);
+	policy->src.to_port = src_ts->get_to_port(src_ts);
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+	policy->dst.from_port = dst_ts-> get_from_port(dst_ts);
+	policy->dst.to_port = dst_ts->get_to_port(dst_ts);
+#endif
+#endif
 
 	/* src or dest proto may be "any" (0), use more restrictive one */
 	proto = max(src_ts->get_protocol(src_ts), dst_ts->get_protocol(dst_ts));
@@ -602,6 +620,16 @@ CALLBACK(policy_entry_equals, bool,
 		   current->dst.proto == policy->dst.proto &&
 		   current->src.mask == policy->src.mask &&
 		   current->dst.mask == policy->dst.mask &&
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+		   current->src.from_port == policy->src.from_port &&
+		   current->src.to_port == policy->src.to_port &&
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+		   current->dst.from_port == policy->dst.from_port &&
+		   current->dst.to_port == policy->dst.to_port &&
+#endif
+#endif
 		   current->src.net->equals(current->src.net, policy->src.net) &&
 		   current->dst.net->equals(current->dst.net, policy->dst.net);
 }
@@ -693,7 +721,7 @@ struct pfkey_msg_t
 			struct sadb_x_kmprivate *x_kmprivate;	/* SADB_X_EXT_KMPRIVATE */
 			struct sadb_x_policy *x_policy;			/* SADB_X_EXT_POLICY */
 			struct sadb_x_sa2 *x_sa2;				/* SADB_X_EXT_SA2 */
-#if defined(__linux__) || defined (__FreeBSD__)
+#if defined(__linux__) || defined (__FreeBSD__) || defined(__QNX__)
 			struct sadb_x_nat_t_type *x_natt_type;	/* SADB_X_EXT_NAT_T_TYPE */
 			struct sadb_x_nat_t_port *x_natt_sport;	/* SADB_X_EXT_NAT_T_SPORT */
 			struct sadb_x_nat_t_port *x_natt_dport;	/* SADB_X_EXT_NAT_T_DPORT */
@@ -713,7 +741,7 @@ struct pfkey_msg_t
 #endif
 #endif
 #endif /* __linux__ */
-#endif /* __linux__ || __FreeBSD__ */
+#endif /* __linux__ || __FreeBSD__ || __QNX__*/
 		} __attribute__((__packed__));
 	};
 };
@@ -762,14 +790,38 @@ ENUM(sadb_ext_type_names, SADB_EXT_RESERVED, SADB_EXT_MAX,
 	"SADB_X_EXT_NAT_T_OAI",
 	"SADB_X_EXT_NAT_T_OAR",
 	"SADB_X_EXT_NAT_T_FRAG",
+#ifndef __QNX__
 	"SADB_X_EXT_SA_REPLAY",
 	"SADB_X_EXT_NEW_ADDRESS_SRC",
 	"SADB_X_EXT_NEW_ADDRESS_DST",
+#else
+#ifdef SADB_X_EXT_IF_INNER
+	"SADB_X_EXT_IF_INNER",
+#endif
+#ifdef SADB_X_EXT_IF_OUTER
+	"SADB_X_EXT_IF_OUTER",
+#endif
+#ifdef SADB_X_EXT_SA_REPLAY
+	"SADB_X_EXT_SA_REPLAY",
+#endif
+#ifdef SADB_X_EXT_NEW_ADDRESS_SRC 
+	"SADB_X_EXT_NEW_ADDRESS_SRC",
+#endif
+#ifdef SADB_X_EXT_NEW_ADDRESS_DST 
+	"SADB_X_EXT_NEW_ADDRESS_DST",
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+	"SADB_X_EXT_PORT_RANGE_SRC",
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+	"SADB_X_EXT_PORT_RANGE_DST",
+#endif /*__QNX__*/
 #ifdef SADB_X_EXT_IF_HW_OFFL
 	"SADB_X_EXT_LFT_CUR_SW_OFFL",
 	"SADB_X_EXT_LFT_CUR_HW_OFFL",
 	"SADB_X_EXT_IF_HW_OFFL",
 #endif
+#endif /*__QNX__*/
 #endif /* __linux__ */
 #endif /* __APPLE__ */
 );
@@ -929,6 +981,13 @@ static kernel_algorithm_t encryption_algs[] = {
 /*  {ENCR_AES_CCM_ICV8,			SADB_X_EALG_AES_CCM_ICV8	}, */
 /*	{ENCR_AES_CCM_ICV12,		SADB_X_EALG_AES_CCM_ICV12	}, */
 /*	{ENCR_AES_CCM_ICV16,		SADB_X_EALG_AES_CCM_ICV16	}, */
+#ifdef __QNX__
+#ifdef SADB_X_EALG_AES_CCM_ICV8
+	{ENCR_AES_CCM_ICV8,		SADB_X_EALG_AES_CCM_ICV8	},
+	{ENCR_AES_CCM_ICV12,		SADB_X_EALG_AES_CCM_ICV12	},
+	{ENCR_AES_CCM_ICV16,		SADB_X_EALG_AES_CCM_ICV16	},
+#endif
+#endif
 #ifdef SADB_X_EALG_AES_GCM_ICV8 /* assume the others are defined too */
 	{ENCR_AES_GCM_ICV8,			SADB_X_EALG_AES_GCM_ICV8	},
 	{ENCR_AES_GCM_ICV12,		SADB_X_EALG_AES_GCM_ICV12	},
@@ -941,6 +1000,11 @@ static kernel_algorithm_t encryption_algs[] = {
 #endif
 #ifdef SADB_X_EALG_CHACHA20POLY1305
 	{ENCR_CHACHA20_POLY1305,	SADB_X_EALG_CHACHA20POLY1305},
+#endif
+#ifdef __QNX__
+#ifdef SADB_X_EALG_AESGMAC
+	{ENCR_NULL_AUTH_AES_GMAC,	SADB_X_EALG_AESGMAC		},
+#endif
 #endif
 	{END_OF_LIST,				0							},
 };
@@ -958,6 +1022,20 @@ static kernel_algorithm_t integrity_algs[] = {
 /*	{AUTH_KPDK_MD5,				0,							}, */
 #ifdef SADB_X_AALG_AES_XCBC_MAC
 	{AUTH_AES_XCBC_96,			SADB_X_AALG_AES_XCBC_MAC,	},
+#endif
+#ifdef __QNX__
+#ifdef SADB_X_AALG_AES128GMAC
+	{AUTH_AES_128_GMAC,			SADB_X_AALG_AES128GMAC,	},
+#endif
+#ifdef SADB_X_AALG_AES192GMAC
+	{AUTH_AES_192_GMAC,			SADB_X_AALG_AES192GMAC,	},
+#endif
+#ifdef SADB_X_AALG_AES256GMAC
+	{AUTH_AES_256_GMAC,			SADB_X_AALG_AES256GMAC,	},
+#endif
+#ifdef SADB_X_AALG_AES_CMAC
+	{AUTH_AES_CMAC_96,			SADB_X_AALG_AES_CMAC,	},
+#endif
 #endif
 	{END_OF_LIST,				0,							},
 };
@@ -1069,6 +1147,24 @@ static void add_addr_ext(struct sadb_msg *msg, host_t *host, uint16_t type,
 	addr->sadb_address_len = PFKEY_LEN(sizeof(*addr) + len);
 	PFKEY_EXT_ADD(msg, addr);
 }
+
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+/**
+ * add port range to the given sadb_msg
+ */
+static void add_port_range_ext(struct sadb_msg *msg, uint16_t type, uint16_t from_port, uint16_t to_port)
+{
+	struct sadb_x_port_range *port_range = (struct sadb_x_port_range *)PFKEY_EXT_ADD_NEXT(msg);
+
+	port_range->sadb_x_port_range_len = PFKEY_LEN(sizeof(*port_range));
+	port_range->sadb_x_port_range_exttype = type;
+	port_range->sadb_x_port_range_from_port = from_port;
+	port_range->sadb_x_port_range_to_port = to_port;
+	PFKEY_EXT_ADD(msg, port_range);
+}
+#endif
+#endif
 
 #ifdef HAVE_NATT
 /**
@@ -2161,10 +2257,17 @@ failed:
 	return status;
 }
 
+#ifndef __QNX__
 METHOD(kernel_ipsec_t, query_sa, status_t,
 	private_kernel_pfkey_ipsec_t *this, kernel_ipsec_sa_id_t *id,
 	kernel_ipsec_query_sa_t *data, uint64_t *bytes, uint64_t *packets,
 	time_t *time)
+#else
+METHOD(kernel_ipsec_t, query_sa, status_t,
+	private_kernel_pfkey_ipsec_t *this, kernel_ipsec_sa_id_t *id,
+	kernel_ipsec_query_sa_t *data, uint64_t *bytes, uint64_t *packets,
+	time_t *use_time)
+#endif
 {
 	unsigned char request[PFKEY_BUFFER_SIZE];
 	struct sadb_msg *msg, *out;
@@ -2223,11 +2326,20 @@ METHOD(kernel_ipsec_t, query_sa, status_t,
 		/* at least on Linux and FreeBSD this contains the number of packets */
 		*packets = response.lft_current->sadb_lifetime_allocations;
 	}
+#ifndef __QNX__
 	if (time)
+#else
+	if (use_time)
+#endif
 	{
-#ifdef __APPLE__
+#if defined(__APPLE__) || (defined(__QNX__) && !(defined(__FreeBSD__)))
 		/* OS X uses the "last" time of use in usetime */
+#ifndef __QNX__
 		*time = response.lft_current->sadb_lifetime_usetime;
+#else
+		*use_time = time_monotonic(NULL) - (time(NULL) - response.lft_current->sadb_lifetime_usetime);
+#endif
+
 #else /* !__APPLE__ */
 		/* on Linux and FreeBSD, sadb_lifetime_usetime is set to the "first"
 		 * time of use, which is actually correct according to PF_KEY. We have
@@ -2730,6 +2842,14 @@ static status_t add_policy_internal(private_kernel_pfkey_ipsec_t *this,
 				 policy->src.mask, TRUE);
 	add_addr_ext(msg, policy->dst.net, SADB_EXT_ADDRESS_DST, policy->dst.proto,
 				 policy->dst.mask, TRUE);
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_SRC, policy->src.from_port, policy->src.to_port);
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_DST, policy->dst.from_port, policy->dst.to_port);
+#endif
+#endif
 
 #ifdef __FreeBSD__
 	{	/* on FreeBSD a lifetime has to be defined to be able to later query
@@ -2959,6 +3079,14 @@ METHOD(kernel_ipsec_t, query_policy, status_t,
 				 policy->src.mask, TRUE);
 	add_addr_ext(msg, policy->dst.net, SADB_EXT_ADDRESS_DST, policy->dst.proto,
 				 policy->dst.mask, TRUE);
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_SRC, policy->src.from_port, policy->src.to_port);
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_DST, policy->dst.from_port, policy->dst.to_port);
+#endif
+#endif
 
 	this->mutex->unlock(this->mutex);
 
@@ -3129,6 +3257,14 @@ METHOD(kernel_ipsec_t, del_policy, status_t,
 				 policy->src.mask, TRUE);
 	add_addr_ext(msg, policy->dst.net, SADB_EXT_ADDRESS_DST, policy->dst.proto,
 				 policy->dst.mask, TRUE);
+#ifdef __QNX__
+#ifdef SADB_X_EXT_PORT_RANGE_SRC
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_SRC, policy->src.from_port, policy->src.to_port);
+#endif
+#ifdef SADB_X_EXT_PORT_RANGE_DST
+	add_port_range_ext(msg, SADB_X_EXT_PORT_RANGE_DST, policy->dst.from_port, policy->dst.to_port);
+#endif
+#endif
 
 	if (policy->route)
 	{

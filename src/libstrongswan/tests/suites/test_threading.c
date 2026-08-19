@@ -52,7 +52,12 @@ static inline void time_is_at_least(timeval_t *expected, timeval_t *actual)
 #else /* WIN32 */
 static inline void time_is_at_least(timeval_t *expected, timeval_t *actual)
 {
-	ck_assert_msg(timercmp(actual, expected, >), "expected: %u.%u, actual: "
+	#ifdef __QNX__
+    ck_assert_msg(timercmp(actual, expected, >=),
+	#else
+    ck_assert_msg(timercmp(actual, expected, >),
+	#endif
+				 "expected: %u.%u, actual: "
 				  "%u.%u", expected->tv_sec, expected->tv_usec, actual->tv_sec,
 				  actual->tv_usec);
 }

@@ -1,6 +1,10 @@
+if QNX
+bin_PROGRAMS = starter_tests
+else
 TESTS = starter_tests
 
 check_PROGRAMS = $(TESTS)
+endif
 
 starter_tests_SOURCES = \
 	suites/test_parser.c \

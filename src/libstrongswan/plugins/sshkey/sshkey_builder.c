@@ -195,6 +195,7 @@ static sshkey_public_key_t *load_from_stream(FILE *file)
 /**
  * Load SSH key from a blob of data (most likely the content of a file)
  */
+ #ifndef __QNX__
 static sshkey_public_key_t *load_from_blob(chunk_t blob)
 {
 	FILE *stream;
@@ -206,6 +207,63 @@ static sshkey_public_key_t *load_from_blob(chunk_t blob)
 	}
 	return load_from_stream(stream);
 }
+#else
+#define MAX_LINE 1024
+static u_char * getstr(u_char *line, size_t len, chunk_t b, size_t *start)
+{
+	u_char *s, *e;
+
+	if ((*start) >= b.len) {
+		/* read done */
+		return NULL;
+	}
+
+	len = min(b.len - (*start), MAX_LINE - 1);
+	s = &(b.ptr[*start]);
+	e = memchr(s, '\n', len);
+	if (e) {
+		len = e - s;
+		(*start) += len + 1;
+	} else {
+		(*start) += len;
+	}
+	memcpy(line, s, len);
+	line[len] = 0;
+
+	return line;
+}
+
+static sshkey_public_key_t *load_from_blob(chunk_t b)
+{
+	sshkey_public_key_t *public = NULL;
+	chunk_t blob = chunk_empty;
+	enumerator_t *enumerator;
+	u_char line[MAX_LINE], *token;
+	size_t start = 0;
+
+	while (!public && getstr(line, sizeof(line), b, &start))
+	{	/* the format is: ssh-<key-type> <key(base64)> <identifier> */
+		if (!strpfx(line, "ssh-rsa") && !strpfx(line, ECDSA_PREFIX) &&
+			!strpfx(line, "ssh-ed25519") && !strpfx(line, "ssh-ed448"))
+		{
+			continue;
+		}
+		enumerator = enumerator_create_token(line, " ", " ");
+		if (enumerator->enumerate(enumerator, &token) &&
+			enumerator->enumerate(enumerator, &token))
+		{
+			blob = chunk_from_base64(chunk_from_str(token), NULL);
+		}
+		enumerator->destroy(enumerator);
+		if (blob.ptr)
+		{
+			public = parse_public_key(blob);
+			chunk_free(&blob);
+		}
+	}
+	return public;
+}
+#endif
 
 /**
  * Load SSH key from file

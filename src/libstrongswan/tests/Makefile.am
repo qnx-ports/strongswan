@@ -13,10 +13,14 @@ libtest_la_LIBADD = \
   $(top_builddir)/src/libstrongswan/libstrongswan.la \
   $(PTHREADLIB) $(ATOMICLIB)
 
-
+if QNX
+bin_PROGRAMS = libstrongswan_tests
+else
 TESTS = libstrongswan_tests
 
 check_PROGRAMS = $(TESTS)
+endif
+
 
 libstrongswan_tests_SOURCES = tests.h tests.c \
   suites/test_linked_list.c \

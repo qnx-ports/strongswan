@@ -26,19 +26,21 @@
 /**
  * Macro gives back larger of two values.
  */
+#ifndef max
 #define max(x,y) ({ \
 	typeof(x) _x = (x); \
 	typeof(y) _y = (y); \
 	_x > _y ? _x : _y; })
-
+#endif
 /**
  * Macro gives back smaller of two values.
  */
+#ifndef min
 #define min(x,y) ({ \
 	typeof(x) _x = (x); \
 	typeof(y) _y = (y); \
 	_x < _y ? _x : _y; })
-
+#endif
 /**
  * Get the padding required to make size a multiple of alignment
  */

@@ -1920,7 +1920,7 @@ AM_CONDITIONAL(USE_PYTHON_WHEELS, test x$python_wheels = xtrue)
 AM_CONDITIONAL(USE_PERL_CPAN, test x$perl_cpan = xtrue)
 AM_CONDITIONAL(USE_TOX, test "x$TOX" != x)
 AM_CONDITIONAL(USE_PY_TEST, test "x$PY_TEST" != x -a "x$TOX" = x)
-
+AM_CONDITIONAL([QNX], [test "x$host_os" = "xnto-qnx"])
 # ========================
 #  set global definitions
 # ========================

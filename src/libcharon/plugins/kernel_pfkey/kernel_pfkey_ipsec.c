@@ -778,6 +778,20 @@ ENUM(sadb_ext_type_names, SADB_EXT_RESERVED, SADB_EXT_MAX,
 	"SADB_EXT_MIGRATE_ADDRESS_SRC",
 	"SADB_EXT_MIGRATE_ADDRESS_DST",
 	"SADB_X_EXT_MIGRATE_IPSECIF",
+#elif defined(__QNX__)
+	"SADB_X_EXT_NAT_T_TYPE",          
+	"SADB_X_EXT_NAT_T_SPORT",         
+	"SADB_X_EXT_NAT_T_DPORT",         
+	"SADB_X_EXT_NAT_T_OAI",           
+	"SADB_X_EXT_NAT_T_OAR",           
+	"SADB_X_EXT_NAT_T_FRAG",          
+	"SADB_X_EXT_IF_INNER",            
+	"SADB_X_EXT_IF_OUTER",            
+	"SADB_X_EXT_SA_REPLAY",           
+	"SADB_X_EXT_NEW_ADDRESS_SRC",     
+	"SADB_X_EXT_NEW_ADDRESS_DST",     
+	"SADB_X_EXT_PORT_RANGE_SRC",      
+	"SADB_X_EXT_PORT_RANGE_DST",      
 #else
 	"SADB_X_EXT_NAT_T_TYPE",
 	"SADB_X_EXT_NAT_T_SPORT",
@@ -790,38 +804,14 @@ ENUM(sadb_ext_type_names, SADB_EXT_RESERVED, SADB_EXT_MAX,
 	"SADB_X_EXT_NAT_T_OAI",
 	"SADB_X_EXT_NAT_T_OAR",
 	"SADB_X_EXT_NAT_T_FRAG",
-#ifndef __QNX__
 	"SADB_X_EXT_SA_REPLAY",
 	"SADB_X_EXT_NEW_ADDRESS_SRC",
 	"SADB_X_EXT_NEW_ADDRESS_DST",
-#else
-#ifdef SADB_X_EXT_IF_INNER
-	"SADB_X_EXT_IF_INNER",
-#endif
-#ifdef SADB_X_EXT_IF_OUTER
-	"SADB_X_EXT_IF_OUTER",
-#endif
-#ifdef SADB_X_EXT_SA_REPLAY
-	"SADB_X_EXT_SA_REPLAY",
-#endif
-#ifdef SADB_X_EXT_NEW_ADDRESS_SRC 
-	"SADB_X_EXT_NEW_ADDRESS_SRC",
-#endif
-#ifdef SADB_X_EXT_NEW_ADDRESS_DST 
-	"SADB_X_EXT_NEW_ADDRESS_DST",
-#endif
-#ifdef SADB_X_EXT_PORT_RANGE_SRC
-	"SADB_X_EXT_PORT_RANGE_SRC",
-#endif
-#ifdef SADB_X_EXT_PORT_RANGE_DST
-	"SADB_X_EXT_PORT_RANGE_DST",
-#endif /*__QNX__*/
 #ifdef SADB_X_EXT_IF_HW_OFFL
 	"SADB_X_EXT_LFT_CUR_SW_OFFL",
 	"SADB_X_EXT_LFT_CUR_HW_OFFL",
 	"SADB_X_EXT_IF_HW_OFFL",
 #endif
-#endif /*__QNX__*/
 #endif /* __linux__ */
 #endif /* __APPLE__ */
 );
@@ -2257,17 +2247,10 @@ failed:
 	return status;
 }
 
-#ifndef __QNX__
 METHOD(kernel_ipsec_t, query_sa, status_t,
 	private_kernel_pfkey_ipsec_t *this, kernel_ipsec_sa_id_t *id,
 	kernel_ipsec_query_sa_t *data, uint64_t *bytes, uint64_t *packets,
 	time_t *time)
-#else
-METHOD(kernel_ipsec_t, query_sa, status_t,
-	private_kernel_pfkey_ipsec_t *this, kernel_ipsec_sa_id_t *id,
-	kernel_ipsec_query_sa_t *data, uint64_t *bytes, uint64_t *packets,
-	time_t *use_time)
-#endif
 {
 	unsigned char request[PFKEY_BUFFER_SIZE];
 	struct sadb_msg *msg, *out;
@@ -2326,19 +2309,11 @@ METHOD(kernel_ipsec_t, query_sa, status_t,
 		/* at least on Linux and FreeBSD this contains the number of packets */
 		*packets = response.lft_current->sadb_lifetime_allocations;
 	}
-#ifndef __QNX__
 	if (time)
-#else
-	if (use_time)
-#endif
 	{
-#if defined(__APPLE__) || (defined(__QNX__) && !(defined(__FreeBSD__)))
+#ifdef __APPLE__
 		/* OS X uses the "last" time of use in usetime */
-#ifndef __QNX__
 		*time = response.lft_current->sadb_lifetime_usetime;
-#else
-		*use_time = time_monotonic(NULL) - (time(NULL) - response.lft_current->sadb_lifetime_usetime);
-#endif
 
 #else /* !__APPLE__ */
 		/* on Linux and FreeBSD, sadb_lifetime_usetime is set to the "first"

@@ -475,15 +475,12 @@ static ssize_t send_msg_v6(private_socket_default_socket_t *this, int skt,
 #ifndef __QNX__
 	char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))] = {};
 #else
-	char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))]; 
+	char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	memset(buf, 0, sizeof(buf));
 #endif
 	struct cmsghdr *cmsg;
 	struct in6_pktinfo *pktinfo;
 	struct sockaddr_in6 *sin;
-
-#ifdef __QNX__
-	memset(buf, 0, sizeof(buf));
-#endif
 
 	msg->msg_control = buf;
 	msg->msg_controllen = sizeof(buf);

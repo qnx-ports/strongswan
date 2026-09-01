@@ -784,14 +784,18 @@ ENUM(sadb_ext_type_names, SADB_EXT_RESERVED, SADB_EXT_MAX,
 	"SADB_X_EXT_NAT_T_DPORT",         
 	"SADB_X_EXT_NAT_T_OAI",           
 	"SADB_X_EXT_NAT_T_OAR",           
-	"SADB_X_EXT_NAT_T_FRAG",          
+	"SADB_X_EXT_NAT_T_FRAG",  
+#if SADB_EXT_MAX == 32        
 	"SADB_X_EXT_IF_INNER",            
-	"SADB_X_EXT_IF_OUTER",            
+	"SADB_X_EXT_IF_OUTER",  
+#endif          
 	"SADB_X_EXT_SA_REPLAY",           
 	"SADB_X_EXT_NEW_ADDRESS_SRC",     
-	"SADB_X_EXT_NEW_ADDRESS_DST",     
+	"SADB_X_EXT_NEW_ADDRESS_DST",  
+#if SADB_EXT_MAX == 32   
 	"SADB_X_EXT_PORT_RANGE_SRC",      
-	"SADB_X_EXT_PORT_RANGE_DST",      
+	"SADB_X_EXT_PORT_RANGE_DST",  
+#endif  
 #else
 	"SADB_X_EXT_NAT_T_TYPE",
 	"SADB_X_EXT_NAT_T_SPORT",

@@ -47,9 +47,13 @@ libvici_la_SOURCES = \
 libvici_la_LIBADD = $(top_builddir)/src/libstrongswan/libstrongswan.la
 
 
+if QNX
+bin_PROGRAMS = vici_tests
+else
 TESTS = vici_tests
 
 check_PROGRAMS = $(TESTS)
+endif
 
 vici_tests_SOURCES = \
 	suites/test_socket.c \

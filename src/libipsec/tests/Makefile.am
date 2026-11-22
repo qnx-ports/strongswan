@@ -1,6 +1,10 @@
+if QNX
+bin_PROGRAMS = ipsec_tests
+else
 TESTS = ipsec_tests
 
 check_PROGRAMS = $(TESTS)
+endif
 
 ipsec_tests_SOURCES = \
 	suites/test_chapoly.c \

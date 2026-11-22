@@ -62,7 +62,9 @@ tun_device_t *tun_device_create(const char *name_tmpl)
 #include <linux/ipv6.h>
 #else
 #include <net/if_tun.h>
+#ifndef __QNX__
 #include <net/if_var.h>
+#endif
 #include <netinet/in_var.h>
 #endif
 

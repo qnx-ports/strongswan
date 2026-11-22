@@ -45,6 +45,15 @@
 #include <daemon.h>
 #include <threading/thread.h>
 
+#ifdef __QNX__
+#include <sys/neutrino.h>
+#if _NTO_VERSION < 800 && !defined(IOSOCK)
+#include <netinet6/in6.h>
+
+#undef IP_PKTINFO
+#endif /* _NTO_VERSION < 800 && !defined(IOSOCK) */
+#endif /* __QNX__ */
+
 /* these are not defined on some platforms */
 #ifndef SOL_IP
 #define SOL_IP IPPROTO_IP
@@ -463,7 +472,13 @@ static ssize_t send_msg_v4(private_socket_default_socket_t *this,
 static ssize_t send_msg_v6(private_socket_default_socket_t *this, int skt,
 						   struct msghdr *msg, host_t *src)
 {
+#ifndef __QNX__	
 	char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))] = {};
+#else
+
+	char buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	memset(buf, 0, sizeof(buf));
+#endif
 	struct cmsghdr *cmsg;
 	struct in6_pktinfo *pktinfo;
 	struct sockaddr_in6 *sin;

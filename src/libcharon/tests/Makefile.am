@@ -1,6 +1,10 @@
+if QNX
+bin_PROGRAMS = libcharon_tests exchange_tests
+else
 TESTS = libcharon_tests exchange_tests
 
 check_PROGRAMS = $(TESTS)
+endif
 
 libcharon_tests_SOURCES = \
   suites/test_ike_cfg.c \

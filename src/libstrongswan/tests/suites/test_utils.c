@@ -1324,6 +1324,8 @@ Suite *utils_suite_create()
 	/* force a timezone to match non-UTC conversions */
 #ifdef WIN32
 	_putenv("TZ=GST-1GDT");
+#elif defined(__QNXNTO__)
+	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0", 1);
 #else
 	setenv("TZ", "Europe/Zurich", 1);
 #endif

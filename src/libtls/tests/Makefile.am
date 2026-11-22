@@ -1,6 +1,10 @@
+if QNX
+bin_PROGRAMS = tls_tests
+else
 TESTS = tls_tests
 
 check_PROGRAMS = $(TESTS)
+endif
 
 tls_tests_SOURCES = \
 	suites/test_hkdf.c \
